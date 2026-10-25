@@ -12,8 +12,9 @@ let tool = "pen";
 let current = "pen";
 let activePointer = null;
 
+// iOS 16.3 以前は screen.orientation がないため、旧来の window.orientation を使う
 function currentAngle() {
-  return screen.orientation?.angle ?? 0;
+  return screen.orientation?.angle ?? globalThis.orientation ?? 0;
 }
 
 function loadSaved() {
@@ -178,4 +179,5 @@ preview.style.width = ERASER_WIDTH + "px";
 preview.style.height = ERASER_WIDTH + "px";
 addEventListener("resize", resize);
 screen.orientation?.addEventListener("change", resize);
+addEventListener("orientationchange", resize);
 resize();
