@@ -54,7 +54,7 @@ function resize() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (turn) {
     ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate((-turn * Math.PI) / 180);
+    ctx.rotate((turn * Math.PI) / 180);
     ctx.drawImage(saved, -saved.width / 2, -saved.height / 2);
   } else {
     ctx.drawImage(saved, 0, 0);
