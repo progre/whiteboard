@@ -6,6 +6,8 @@ const preview = document.querySelector("#eraser-preview");
 
 const PEN_WIDTH = 3;
 const ERASER_WIDTH = 72;
+// OS のジェスチャー（戻る、画面端スワイプ）と区別するため、端からこの幅の内側の入力は無視する
+const EDGE_MARGIN = 24;
 const STORAGE_KEY = "whiteboard";
 
 let tool = "pen";
@@ -107,6 +109,15 @@ function showPreview(x, y) {
   preview.style.top = y + "px";
 }
 
+function isEdge(e) {
+  return (
+    e.clientX < EDGE_MARGIN ||
+    e.clientY < EDGE_MARGIN ||
+    innerWidth - e.clientX < EDGE_MARGIN ||
+    innerHeight - e.clientY < EDGE_MARGIN
+  );
+}
+
 function enterFullscreen() {
   if (document.fullscreenElement || !document.fullscreenEnabled) return;
   document.documentElement.requestFullscreen().catch(() => {});
@@ -129,7 +140,7 @@ function selectTool(next) {
 }
 
 canvas.addEventListener("pointerdown", (e) => {
-  if (activePointer !== null) return;
+  if (activePointer !== null || isEdge(e)) return;
   activePointer = e.pointerId;
   canvas.setPointerCapture(e.pointerId);
   const isStylusEraser = e.pointerType === "pen" && (e.buttons & 32) !== 0;
@@ -166,7 +177,9 @@ canvas.addEventListener("pointerup", endStroke);
 canvas.addEventListener("pointercancel", endStroke);
 canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
-document.addEventListener("pointerdown", enterFullscreen);
+document.addEventListener("pointerdown", (e) => {
+  if (!isEdge(e)) enterFullscreen();
+});
 document.addEventListener("touchmove", (e) => e.preventDefault(), {
   passive: false,
 });
