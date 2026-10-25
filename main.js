@@ -10,7 +10,36 @@ const ERASER_WIDTH = 48;
 let tool = "pen";
 let current = "pen";
 let activePointer = null;
-let last = null;
+const strokes = [];
+const baseAngle = currentAngle();
+
+function currentAngle() {
+  return screen.orientation?.angle ?? 0;
+}
+
+// 紙の向きは画面と一緒に回るため、起動時からの回転量で描画を回す
+function paperRotation() {
+  const turned = (((currentAngle() - baseAngle) % 360) + 360) % 360;
+  return (-turned * Math.PI) / 180;
+}
+
+function toView(offset) {
+  const a = paperRotation();
+  return {
+    x: innerWidth / 2 + offset.x * Math.cos(a) - offset.y * Math.sin(a),
+    y: innerHeight / 2 + offset.x * Math.sin(a) + offset.y * Math.cos(a),
+  };
+}
+
+function toOffset(point) {
+  const a = -paperRotation();
+  const dx = point.x - innerWidth / 2;
+  const dy = point.y - innerHeight / 2;
+  return {
+    x: dx * Math.cos(a) - dy * Math.sin(a),
+    y: dx * Math.sin(a) + dy * Math.cos(a),
+  };
+}
 
 function applyStyle(mode) {
   const isEraser = mode === "eraser";
@@ -22,45 +51,34 @@ function applyStyle(mode) {
   ctx.globalCompositeOperation = isEraser ? "destination-out" : "source-over";
 }
 
-let lastAngle = 0;
-let lastLandscape = innerWidth > innerHeight;
-
-function snapshot() {
-  const copy = document.createElement("canvas");
-  copy.width = canvas.width;
-  copy.height = canvas.height;
-  copy.getContext("2d").drawImage(canvas, 0, 0);
-  return copy;
+function replay(stroke) {
+  applyStyle(stroke.mode);
+  const points = stroke.points.map(toView);
+  ctx.beginPath();
+  if (points.length === 1) {
+    ctx.arc(points[0].x, points[0].y, ctx.lineWidth / 2, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  ctx.moveTo(points[0].x, points[0].y);
+  points.slice(1).forEach((p) => ctx.lineTo(p.x, p.y));
+  ctx.stroke();
 }
 
-function consumeAngleDelta() {
-  const angle = screen.orientation?.angle ?? lastAngle;
-  const delta = (angle - lastAngle + 360) % 360;
-  lastAngle = angle;
-  return delta;
+function render() {
+  const dpr = devicePixelRatio || 1;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  strokes.forEach(replay);
+  applyStyle(current);
 }
 
 function resize() {
-  const landscape = innerWidth > innerHeight;
-  const flipped = landscape !== lastLandscape;
-  lastLandscape = landscape;
-  const delta = consumeAngleDelta();
-  const turn = flipped ? delta || 90 : delta;
-
-  const saved = snapshot();
   const dpr = devicePixelRatio || 1;
   canvas.width = Math.round(innerWidth * dpr);
   canvas.height = Math.round(innerHeight * dpr);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  if (turn) {
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate((turn * Math.PI) / 180);
-    ctx.drawImage(saved, -saved.width / 2, -saved.height / 2);
-  } else {
-    ctx.drawImage(saved, 0, 0);
-  }
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  applyStyle(current);
+  render();
 }
 
 function showPreview(x, y) {
@@ -74,18 +92,13 @@ function enterFullscreen() {
   document.documentElement.requestFullscreen().catch(() => {});
 }
 
-function drawTo(x, y) {
+function drawSegment(from, to) {
+  const a = toView(from);
+  const b = toView(to);
   ctx.beginPath();
-  ctx.moveTo(last.x, last.y);
-  ctx.lineTo(x, y);
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
   ctx.stroke();
-  last = { x, y };
-}
-
-function drawDot(x, y) {
-  ctx.beginPath();
-  ctx.arc(x, y, ctx.lineWidth / 2, 0, Math.PI * 2);
-  ctx.fill();
 }
 
 function selectTool(next) {
@@ -101,16 +114,24 @@ canvas.addEventListener("pointerdown", (e) => {
   canvas.setPointerCapture(e.pointerId);
   const isStylusEraser = e.pointerType === "pen" && (e.buttons & 32) !== 0;
   current = isStylusEraser ? "eraser" : tool;
+  strokes.push({
+    mode: current,
+    points: [toOffset({ x: e.clientX, y: e.clientY })],
+  });
+  replay(strokes.at(-1));
   applyStyle(current);
-  last = { x: e.clientX, y: e.clientY };
-  drawDot(last.x, last.y);
   showPreview(e.clientX, e.clientY);
 });
 
 canvas.addEventListener("pointermove", (e) => {
   if (e.pointerId !== activePointer) return;
+  const stroke = strokes.at(-1);
   const events = e.getCoalescedEvents?.() ?? [e];
-  events.forEach((p) => drawTo(p.clientX, p.clientY));
+  events.forEach((p) => {
+    const next = toOffset(p);
+    drawSegment(stroke.points.at(-1), next);
+    stroke.points.push(next);
+  });
   showPreview(e.clientX, e.clientY);
 });
 
