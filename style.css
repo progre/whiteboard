@@ -1,0 +1,54 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #fff;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#board {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+#tools {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+#tools button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #000;
+  border-radius: 50%;
+  background: #fff;
+  touch-action: manipulation;
+}
+
+#pen {
+  background: #000;
+}
+
+#eraser {
+  border-radius: 6px;
+}
+
+#tools button[aria-pressed="true"] {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
