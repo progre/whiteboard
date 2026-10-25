@@ -5,7 +5,7 @@ const eraserButton = document.querySelector("#eraser");
 const preview = document.querySelector("#eraser-preview");
 
 const PEN_WIDTH = 3;
-const ERASER_WIDTH = 48;
+const ERASER_WIDTH = 72;
 const STORAGE_KEY = "whiteboard";
 
 let tool = "pen";
