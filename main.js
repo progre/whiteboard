@@ -6,16 +6,35 @@ const preview = document.querySelector("#eraser-preview");
 
 const PEN_WIDTH = 3;
 const ERASER_WIDTH = 48;
+const STORAGE_KEY = "whiteboard";
 
 let tool = "pen";
 let current = "pen";
 let activePointer = null;
-const strokes = [];
-const baseAngle = currentAngle();
 
 function currentAngle() {
   return screen.orientation?.angle ?? 0;
 }
+
+function loadSaved() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ baseAngle, strokes }));
+  } catch {
+    // 容量超過などで保存できなくても描画は続ける
+  }
+}
+
+const saved = loadSaved();
+const baseAngle = saved?.baseAngle ?? currentAngle();
+const strokes = saved?.strokes ?? [];
 
 // 紙の向きは画面と一緒に回るため、起動時からの回転量で描画を回す
 function paperRotation() {
@@ -139,6 +158,7 @@ function endStroke(e) {
   if (e.pointerId !== activePointer) return;
   activePointer = null;
   preview.hidden = true;
+  save();
 }
 
 canvas.addEventListener("pointerup", endStroke);
