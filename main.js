@@ -22,17 +22,43 @@ function applyStyle(mode) {
   ctx.globalCompositeOperation = isEraser ? "destination-out" : "source-over";
 }
 
-function resize() {
-  const saved = document.createElement("canvas");
-  saved.width = canvas.width;
-  saved.height = canvas.height;
-  saved.getContext("2d").drawImage(canvas, 0, 0);
+let lastAngle = 0;
+let lastLandscape = innerWidth > innerHeight;
 
+function snapshot() {
+  const copy = document.createElement("canvas");
+  copy.width = canvas.width;
+  copy.height = canvas.height;
+  copy.getContext("2d").drawImage(canvas, 0, 0);
+  return copy;
+}
+
+function consumeAngleDelta() {
+  const angle = screen.orientation?.angle ?? lastAngle;
+  const delta = (angle - lastAngle + 360) % 360;
+  lastAngle = angle;
+  return delta;
+}
+
+function resize() {
+  const landscape = innerWidth > innerHeight;
+  const flipped = landscape !== lastLandscape;
+  lastLandscape = landscape;
+  const delta = consumeAngleDelta();
+  const turn = flipped ? delta || 90 : delta;
+
+  const saved = snapshot();
   const dpr = devicePixelRatio || 1;
   canvas.width = Math.round(innerWidth * dpr);
   canvas.height = Math.round(innerHeight * dpr);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(saved, 0, 0);
+  if (turn) {
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((-turn * Math.PI) / 180);
+    ctx.drawImage(saved, -saved.width / 2, -saved.height / 2);
+  } else {
+    ctx.drawImage(saved, 0, 0);
+  }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   applyStyle(current);
 }
@@ -110,4 +136,5 @@ eraserButton.addEventListener("click", () => selectTool("eraser"));
 preview.style.width = ERASER_WIDTH + "px";
 preview.style.height = ERASER_WIDTH + "px";
 addEventListener("resize", resize);
+screen.orientation?.addEventListener("change", resize);
 resize();
