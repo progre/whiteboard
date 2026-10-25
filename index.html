@@ -18,10 +18,19 @@
     <canvas id="board"></canvas>
     <div id="eraser-preview" hidden></div>
     <div id="tools">
-      <button id="pen" type="button" aria-label="ペン"
-        aria-pressed="true"></button>
+      <button id="pen" type="button" aria-label="ペン" aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 20l1-4L16 5l3 3L8 19z" />
+          <path d="M14 7l3 3" />
+        </svg>
+      </button>
       <button id="eraser" type="button" aria-label="消しゴム"
-        aria-pressed="false"></button>
+        aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 16l8-8 8 8-4 4H8z" />
+          <path d="M8 20h12" />
+        </svg>
+      </button>
     </div>
     <script src="main.js"></script>
   </body>

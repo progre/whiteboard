@@ -30,27 +30,32 @@ body {
 }
 
 #tools button {
-  width: 36px;
-  height: 36px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
   padding: 0;
   margin: 0;
-  border: 1px solid #000;
-  border-radius: 50%;
+  border: 2px solid #000;
+  border-radius: 10px;
   background: #fff;
+  color: #000;
   touch-action: manipulation;
 }
 
-#pen {
-  background: #000;
-}
-
-#eraser {
-  border-radius: 6px;
+#tools svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 #tools button[aria-pressed="true"] {
-  outline: 2px solid #000;
-  outline-offset: 2px;
+  background: #000;
+  color: #fff;
 }
 
 #eraser-preview {
