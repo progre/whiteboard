@@ -52,3 +52,14 @@ body {
   outline: 2px solid #000;
   outline-offset: 2px;
 }
+
+#eraser-preview {
+  position: fixed;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  border: 2px solid #888;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
